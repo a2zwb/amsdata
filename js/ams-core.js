@@ -454,11 +454,8 @@ function checkSession() {
     if (!role || !validRoles.includes(role)) {
         console.log('No valid role, showing login');
         loadData();
-        const verEl = document.getElementById('headerVersionDisplay');
-        if (verEl) verEl.textContent = "AMS v5.3.0 (NO ZEROS) • LOCAL DATABASE SECURED";
         const headVer = document.getElementById('headerVersionDisplay');
-        if (headVer) headVer.textContent = "v5.2.0-DEV-FIX";
-        // Modal is already hidden by CSS, don't remove hidden class
+        if (headVer) headVer.textContent = "v5.3.0-NODES";
         return;
     }
 
@@ -3970,23 +3967,27 @@ function initServerIndicator() {
     
     // Check GitHub connection
     async function checkServerStatus() {
-        // Don't update if currently syncing
         if (indicator.classList.contains('syncing')) return;
         
         try {
-            const config = (() => {
-                const host = window.location.hostname;
-                const parts = window.location.pathname.split('/').filter(Boolean);
-                const owner = host.split('.')[0];
-                const repo = parts[0] || '';
-                return { owner, repo, branch: 'main', dataPath: 'data/db.json' };
-            })();
+            const host = window.location.hostname;
+            let url;
             
-            const url = `https://raw.githubusercontent.com/${config.owner}/${config.repo}/${config.branch}/${config.dataPath}?t=${Date.now()}`;
+            if (host.includes('github.io')) {
+                // Determine relative path based on repo name
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const repoName = pathParts[0] || 'amsdata';
+                url = `/${repoName}/data/db.json?t=${Date.now()}`;
+            } else {
+                // Local fallback
+                url = 'data/db.json';
+            }
+            
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
             
             const res = await fetch(url, { 
+                method: 'HEAD', // HEAD is lighter for status checks
                 signal: controller.signal,
                 cache: 'no-store'
             });
@@ -4007,11 +4008,11 @@ function initServerIndicator() {
         
         if (state === 'connected') {
             indicator.classList.add('connected');
-            status.textContent = 'Live Sync On';
+            status.textContent = 'Sync Ready';
             dot.classList.remove('animate-pulse');
         } else if (state === 'disconnected') {
             indicator.classList.add('disconnected');
-            status.textContent = 'Offline Mode';
+            status.textContent = 'Sync Error';
             dot.classList.remove('animate-pulse');
         } else if (state === 'syncing') {
             indicator.classList.add('syncing');

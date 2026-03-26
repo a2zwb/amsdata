@@ -75,11 +75,7 @@
             </div>
         </div>
 
-        <!-- Server Connection Indicator -->
-        <div id="serverIndicator" class="fixed bottom-12 right-4 z-[100] flex items-center gap-2 px-3 py-2 rounded-full shadow-lg bg-white border border-gray-200 transition-all duration-300">
-            <div id="serverDot" class="w-3 h-3 rounded-full bg-gray-400 animate-pulse"></div>
-            <span id="serverStatus" class="text-xs font-medium text-gray-600">Connecting...</span>
-        </div>
+        <!-- Server Connection Indicator moved to header -->
 
         <nav class="no-print border-b pb-4 mb-6">
             <div class="flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-40">
@@ -100,7 +96,11 @@
                     </div>
                     <div class="h-8 w-px bg-gray-200 hidden sm:block"></div>
                     <div class="flex flex-col items-end">
-                        <img src="assets/img/header-logo.png" alt="AMS Logo" class="h-7 w-auto object-contain">
+                        <div id="serverIndicator" class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-gray-50 border border-gray-200 transition-all duration-300">
+                            <div id="serverDot" class="w-2 h-2 rounded-full bg-gray-400"></div>
+                            <span id="serverStatus" class="text-[9px] font-bold text-gray-500 uppercase tracking-tighter">Sync Off</span>
+                        </div>
+                        <img src="assets/img/header-logo.png" alt="AMS Logo" class="h-7 w-auto object-contain mt-1">
                         <span class="text-[9px] text-gray-400 font-mono font-bold"
                             id="headerVersionDisplay">v5.3.0-DEV-NODES</span>
                     </div>
