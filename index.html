@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Academic Management System | AMS v5.2.0-DEV-FIX</title>
+
+    <!-- Tailwind CSS Fallback (v2.2) -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Tailwind CSS Script (v3.4) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        'surface': '#ffffff',
+                        'background': '#f9fafb',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Immediate Session Check - hides modal BEFORE page renders -->
+    <script>
+        // Check if user is logged in and hide modal with inline style immediately
+        if (['admin','staff','incharge','workshop_faculty','technical_faculty','developer'].indexOf(localStorage.getItem('user_role')) !== -1) {
+            document.write('<style>#loginModal{display:none!important}</style>');
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50 text-gray-900 pb-12">
+    <div id="app" class="max-w-4xl mx-auto p-4 md:p-6 bg-white shadow-lg min-h-screen md:mt-6 rounded-xl relative">
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="hidden no-print fixed inset-0 bg-gray-900 z-50 flex justify-center items-center" style="display: none !important;">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 w-11/12 max-w-sm text-center">
+                <img src="assets/img/header-logo.png" alt="A2Z Institute" class="h-10 mx-auto mb-4">
+                <p class="text-gray-500 mb-6 text-sm">Please sign in to continue</p>
+                <form onsubmit="handleLogin(event)" class="space-y-4">
+                    <input type="text" id="loginName" placeholder="Username (first 4 letters of name)" required
+                        class="w-full p-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-primary outline-none">
+                    <div class="relative">
+                        <input type="password" id="loginPhone" placeholder="Password (last 4 digits of phone)" required
+                            class="w-full p-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-primary outline-none pr-10">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-primary text-white font-bold py-3 rounded-xl shadow-lg hover:scale-[1.02] transition-transform">
+                        Sign In
+                    </button>
+                    <p id="loginError" class="text-red-500 text-xs font-bold hidden">Invalid credentials</p>
+                    <div id="loginDebug" class="text-gray-400 text-xs mt-2 hidden"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Server Connection Indicator -->
+        <div id="serverIndicator" class="fixed bottom-12 right-4 z-[100] flex items-center gap-2 px-3 py-2 rounded-full shadow-lg bg-white border border-gray-200 transition-all duration-300">
+            <div id="serverDot" class="w-3 h-3 rounded-full bg-gray-400 animate-pulse"></div>
+            <span id="serverStatus" class="text-xs font-medium text-gray-600">Connecting...</span>
+        </div>
+
+        <nav class="no-print border-b pb-4 mb-6">
+            <div class="flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-40">
+                <button onclick="toggleMenu()"
+                    class="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 hover:text-primary transition-all shadow-sm border border-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16">
+                        </path>
+                    </svg>
+                </button>
+                <div class="flex items-center gap-3">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-[10px] font-extrabold text-gray-900 uppercase leading-tight tracking-tight">
+                            Institute of Heavy Equipments & ITC</p>
+                        <p class="text-[8px] text-gray-400 font-bold leading-tight tracking-wider">Approved STED Council
+                            of India</p>
+                    </div>
+                    <div class="h-8 w-px bg-gray-200 hidden sm:block"></div>
+                    <div class="flex flex-col items-end">
+                        <img src="assets/img/header-logo.png" alt="AMS Logo" class="h-7 w-auto object-contain">
+                        <span class="text-[9px] text-gray-400 font-mono font-bold"
+                            id="headerVersionDisplay">v5.3.0-DEV-NODES</span>
+                    </div>
+                </div>
+            </div>
+            <div id="headerWelcomeMsg"
+                class="mt-4 flex items-center justify-between bg-blue-50/50 p-2 px-3 rounded-xl border border-blue-100/50 hidden">
+                <div class="flex items-center gap-2">
+                    <div class="flex -space-x-1">
+                        <div
+                            class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse">
+                        </div>
+                    </div>
+                    <span class="text-[11px] text-gray-500 font-semibold">User: <span class="text-blue-700 font-bold"
+                            id="headerUserName"></span></span>
+                </div>
+                <span
+                    class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-md font-black uppercase tracking-widest shadow-sm"
+                    id="headerUserRole"></span>
+            </div>
+        </nav>
+
+        <!-- Menu Drawer -->
+        <div id="mobileMenu" class="no-print fixed inset-0 bg-black/50 z-[100] hidden" onclick="toggleMenu()">
+            <div class="bg-white w-72 h-full p-6 shadow-2xl overflow-y-auto fixed left-0 top-0 transition-transform duration-300"
+                onclick="event.stopPropagation()">
+                <div class="flex justify-between items-center mb-6 border-b pb-2">
+                    <h2 class="text-2xl font-bold text-primary">Main Menu</h2>
+                    <button onclick="toggleMenu()" class="text-gray-400 hover:text-red-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <!-- Login Modal moved to top -->
+
+                <div class="space-y-2">
+                    <button id="nav-dashboard" onclick="renderView('dashboard')"
+                        class="w-full text-left px-4 py-3 bg-gray-50 rounded-xl font-medium hover:bg-blue-50 hover:text-primary transition-all flex items-center gap-3">
+                        <span>🏠</span> Dashboard
+                    </button>
+                    <button id="nav-students" onclick="renderView('studentManagement')"
+                        class="w-full text-left px-4 py-3 bg-gray-50 rounded-xl font-medium hover:bg-blue-50 hover:text-primary transition-all flex items-center gap-3">
+                        <span>👥</span> Student Profiles
+                    </button>
+                    <button id="nav-staff" onclick="renderView('staffManagement')"
+                        class="w-full text-left px-4 py-3 bg-gray-50 rounded-xl font-medium hover:bg-blue-50 hover:text-primary transition-all flex items-center gap-3">
+                        <span>👔</span> Staff Management
+                    </button>
+                    <button id="nav-attend-mark" onclick="renderView('attendanceMarking')"
+                        class="w-full text-left px-4 py-3 bg-gray-50 rounded-xl font-medium hover:bg-blue-50 hover:text-primary transition-all flex items-center gap-3">
+                        <span>✅</span> Daily Attendance
+                    </button>
+                    <button id="nav-attend-reg" onclick="renderView('attendanceRegister')"
+                        class="w-full text-left px-4 py-3 bg-gray-50 rounded-xl font-medium hover:bg-blue-50 hover:text-primary transition-all flex items-center gap-3">
+                        <span>📅</span> Attendance Register
+                    </button>
+                    <button id="nav-assess-entry" onclick="renderView('assessmentSetup')"
+                        class="w-full text-left px-4 py-3 bg-gray-50 rounded-xl font-medium hover:bg-blue-50 hover:text-primary transition-all flex items-center gap-3">
+                        <span>📝</span> Assessment Entry
+                    </button>
+                    <button id="nav-docs" onclick="renderView('printSetup')"
+                        class="w-full text-left px-4 py-3 bg-gray-50 rounded-xl font-medium hover:bg-blue-50 hover:text-primary transition-all flex items-center gap-3">
+                        <span>🖨️</span> Document Center
+                    </button>
+                    <button id="nav-history" onclick="renderView('assessmentHistory')"
+                        class="w-full text-left px-4 py-3 bg-gray-50 rounded-xl font-medium hover:bg-blue-50 hover:text-primary transition-all flex items-center gap-3">
+                        <span>📂</span> Assessments Recorded
+                    </button>
+                    <button id="nav-batch-alloc" onclick="renderView('batchAllocation')"
+                        class="w-full text-left px-4 py-3 bg-purple-50 rounded-xl font-medium hover:bg-purple-100 hover:text-purple-700 transition-all flex items-center gap-3 border border-purple-200">
+                        <span>🏷️</span> Batch Allocation
+                    </button>
+                    <button id="nav-backup" onclick="renderView('backupRestore')"
+                        class="w-full text-left px-4 py-3 bg-green-50 rounded-xl font-medium hover:bg-green-100 hover:text-green-700 transition-all flex items-center gap-3 border border-green-200">
+                        <span>💾</span> Backup & Restore
+                    </button>
+
+
+                    <div class="pt-6 border-t mt-6">
+                    </div>
+                </div>
+
+                <!-- Developer Nodes Button -->
+                <button onclick="renderView('developerNodes')" id="nav-dev-nodes"
+                    class="hidden mb-4 w-full text-left px-4 py-2 text-xs text-purple-700 font-bold hover:bg-purple-50 rounded-lg flex items-center gap-2 border border-purple-100">
+                    <span>🌐</span> Network Nodes (Dev)
+                </button>
+
+                <!-- Activity Log Button -->
+                <button onclick="renderView('activityLogs')" id="nav-logs"
+                    class="hidden mb-4 w-full text-left px-4 py-2 text-xs text-gray-500 font-bold hover:bg-gray-50 rounded-lg flex items-center gap-2 border border-gray-100">
+                    <span>📜</span> Activity Logs
+                </button>
+
+                <div id="userProfileDisplay" class="mb-4 px-2 py-2 bg-blue-50 rounded-lg hidden">
+                    <p class="text-xs text-gray-500 uppercase font-bold mb-1">Logged In As</p>
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold text-xs"
+                            id="userAvatar">
+                            👤
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-sm font-bold text-gray-800 truncate" id="userNameDisplay">User</p>
+                            <p class="text-[10px] text-gray-500 font-mono truncate" id="userRoleDisplay">Staff
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-[10px] text-gray-400 font-bold uppercase mb-2">Management</p>
+
+                <!-- Account Controls -->
+                        <div id="accountControls" class="mb-4 border-b pb-4">
+                            <button onclick="handleLogout()"
+                                class="w-full text-left px-4 py-2 text-sm text-red-600 font-bold hover:bg-red-50 rounded-lg flex items-center gap-2 mt-4">
+                                <span>🚪</span> Sign Out
+                            </button>
+                        </div>
+            </div>
+        </div>
+
+
+        <div id="mainView" data-current-view="dashboard">
+            <!-- Dashboard View -->
+            <div id="dashboard" class="app-view">
+                <div class="text-center mb-12 py-8 bg-gradient-to-b from-blue-50/50 to-transparent rounded-3xl">
+                    <h1
+                        class="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
+                        Academic Management System
+                    </h1>
+                    <div class="flex items-center justify-center gap-2 mb-4">
+                        <span class="h-px w-8 bg-blue-200"></span>
+                        <p class="text-blue-500 font-bold uppercase tracking-[0.2em] text-xs">Automobile Engineering
+                            Department</p>
+                        <span class="h-px w-8 bg-blue-200"></span>
+                    </div>
+                    <p class="text-sm text-gray-400 font-medium">Institute of Heavy Equipments & ITC</p>
+                </div>
+                <div id="dashboardStats"></div>
+                <div id="dashboardCards" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Cards will be dynamically rendered based on user role -->
+                </div>
+            </div>
+
+            <!-- Student Profile View -->
+            <div id="studentManagement" class="app-view hidden">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+                            <span class="text-white text-lg">👥</span>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Student Profiles</h2>
+                            <p class="text-xs text-gray-500">Manage student records and documents</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <div class="relative flex-grow">
+                            <input type="text" id="studentSearchInput" oninput="renderStudentList()" 
+                                placeholder="Search by name, admission no, or batch..." 
+                                class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-primary focus:border-primary outline-none shadow-sm">
+                            <span class="absolute left-3 top-2.5 text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            </span>
+                        </div>
+                        <button onclick="toggleBulkInputModal(true)"
+                            class="px-4 py-2.5 bg-gradient-to-r from-gray-700 to-gray-800 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all whitespace-nowrap flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            Bulk Import
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block flex items-center gap-2">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            Active Batch
+                        </label>
+                        <select id="batchSelector" onchange="renderStudentList()" class="w-full p-2.5 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary focus:border-primary outline-none shadow-sm"></select>
+                    </div>
+                    <div class="md:col-span-2 flex items-end">
+                        <div id="studentCountDisplay" class="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-xl">
+                            Loading...
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8 overflow-hidden">
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 text-[10px] uppercase text-gray-600 font-bold sticky top-0">
+                                <tr>
+                                    <th class="p-4">Student Name</th>
+                                    <th class="p-4">Admission No.</th>
+                                    <th class="p-4">Batch</th>
+                                    <th class="p-4 text-center">Sub</th>
+                                    <th class="p-4 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentListBody" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <form id="studentForm" onsubmit="handleStudentFormSubmit(event)"
+                    class="bg-gradient-to-br from-slate-50 to-blue-50 p-6 rounded-2xl border border-slate-200 shadow-lg">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span class="text-blue-600">➕</span>
+                        </div>
+                        <h3 class="font-bold text-gray-800">Add Individual Student</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Full Name</label>
+                            <input name="studentName" placeholder="Enter student name" required
+                                class="w-full p-3 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-primary focus:border-primary outline-none shadow-sm">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Admission No.</label>
+                            <input name="admissionNo" placeholder="e.g. AME/001/25" required
+                                class="w-full p-3 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-primary focus:border-primary outline-none shadow-sm">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Batch ID</label>
+                            <input name="batchId" placeholder="e.g. AME 37" required
+                                class="w-full p-3 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-primary focus:border-primary outline-none shadow-sm uppercase">
+                        </div>
+                    </div>
+                    <button type="submit"
+                        class="mt-5 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                        Save Student
+                    </button>
+                </form>
+            </div>
+
+            <!-- Staff Management View -->
+            <div id="staffManagement" class="app-view hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Staff Management</h2>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-500 font-bold">
+                            Total Staff: <span id="staffCount" class="text-primary">0</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Add Staff Form -->
+                <form id="staffForm" onsubmit="handleStaffFormSubmit(event)"
+                    class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 mb-8 shadow-sm">
+                    <h3 class="font-bold mb-4 text-primary flex items-center gap-2">
+                        <span>➕</span> Add New Staff Member
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <input id="staffName" name="staffName" placeholder="Full Name" required
+                            class="p-3 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary outline-none">
+                        <input id="staffPhone" name="staffPhone" type="tel" placeholder="Phone Number" required
+                            pattern="[0-9]{10}" title="Enter 10-digit phone number"
+                            class="p-3 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-600 uppercase mb-1 block">Position</label>
+                            <select id="staffPosition" required
+                                class="w-full p-3 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary outline-none">
+                                <option value="">-- Select Position --</option>
+                                <option value="MD">MD (Managing Director)</option>
+                                <option value="GM">GM (General Manager)</option>
+                                <option value="A.GM">A.GM (Assistant General Manager)</option>
+                                <option value="HOD">HOD (Head of Department)</option>
+                                <option value="A.HOD">A.HOD (Assistant Head of Department)</option>
+                                <option value="Workshop Incharge">Workshop Incharge</option>
+                                <option value="Workshop Faculty">Workshop Faculty</option>
+                                <option value="Technical Faculty">Technical Faculty</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-600 uppercase mb-1 block">Color Badge</label>
+                            <select id="staffColor" required
+                                class="w-full p-3 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary outline-none">
+                                <option value="">-- Select Color --</option>
+                                <option value="blue">🔵 Blue - Staff</option>
+                                <option value="green">🟢 Green - Senior Staff/Incharge</option>
+                                <option value="red">🔴 Red - HOD</option>
+                                <option value="white">⚪ White - Manager</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <input type="checkbox" id="staffIsAdmin" name="staffIsAdmin"
+                            class="w-4 h-4 text-primary focus:ring-2 focus:ring-primary">
+                        <label for="staffIsAdmin" class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                            <span>⭐</span> Site Administrator (Full Access)
+                        </label>
+                    </div>
+                    <button type="submit"
+                        class="w-full md:w-auto px-8 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-dark shadow-md transition-all hover:scale-[1.02]">
+                        <span>💾</span> Add Staff Member
+                    </button>
+                </form>
+
+                <!-- Staff List Display -->
+                <div>
+                    <h3 class="font-bold text-lg mb-4 text-gray-700 flex items-center gap-2">
+                        <span>📋</span> Staff Directory
+                    </h3>
+                    <div id="staffListContainer" class="min-h-[200px]">
+                        <!-- Staff cards will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Attendance Marking View -->
+            <div id="attendanceMarking" class="app-view hidden">
+                <h2 class="text-2xl font-bold mb-6">Daily Attendance</h2>
+                <div class="bg-white p-6 border rounded-2xl shadow-sm mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Select Batch</label><select
+                                id="attendanceBatchSelector" class="w-full p-2.5 border rounded-lg"></select></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Input Choice</label><select
+                                id="attendanceSubBatchSelector" class="w-full p-2.5 border rounded-lg"
+                                onchange="renderAttendanceList()"></select></div>
+                        <div class="md:col-span-2">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Search Student</label>
+                            <div class="relative">
+                                <input type="text" id="attendanceSearchInput" oninput="renderAttendanceList()" 
+                                    placeholder="Type name to filter..." 
+                                    class="w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-primary outline-none">
+                                <span class="absolute left-3 top-2.5 text-gray-400 font-bold">🔍</span>
+                            </div>
+                        </div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Select Date</label><input
+                                type="date" id="attendanceDate" class="w-full p-2.5 border rounded-lg"></div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Session Type</label>
+                            <select id="attendanceSessionType" class="w-full p-2.5 border rounded-lg"
+                                onchange="updateSessionType()">
+                                <option value="Theory">Theory</option>
+                                <option value="Workshop">Workshop</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="max-h-[400px] overflow-y-auto border rounded-lg">
+                        <table class="w-full">
+                            <thead
+                                class="bg-gray-50 border-b sticky top-0 text-[10px] uppercase font-bold text-gray-600">
+                                <tr>
+                                    <th class="p-3 text-left">Student Name</th>
+                                    <th class="p-3 text-left">Adm No.</th>
+                                    <th class="p-3 text-center">Present</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceListBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                        <button onclick="deleteAttendanceManual()" id="btnDeleteRecord"
+                            class="hidden w-full bg-red-600 text-white font-bold py-3.5 rounded-xl hover:bg-red-700 shadow-lg flex items-center justify-center gap-2 transition-all">
+                            <span>🗑️ Delete Record</span>
+                        </button>
+                        <button onclick="saveAttendanceManual()"
+                            class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-lg flex items-center justify-center gap-2 transition-all">
+                            <span>💾 Save to Register</span>
+                        </button>
+                        <button onclick="shareAttendanceWhatsApp()"
+                            class="w-full bg-green-600 text-white font-bold py-3.5 rounded-xl hover:bg-green-700 shadow-lg flex items-center justify-center gap-2 transition-all">
+                            <span>📱 Share Summary</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register View -->
+            <div id="attendanceRegister" class="app-view hidden">
+                <h2 class="text-2xl font-bold mb-6">Attendance Register</h2>
+                <div class="bg-white p-6 border rounded-2xl shadow-sm">
+                    <div class="flex flex-col md:flex-row gap-4 mb-4 items-end">
+                        <div class="w-full md:w-64">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Select Batch</label>
+                            <select id="registerBatchSelector" class="w-full p-2.5 border rounded-lg"
+                                onchange="renderAttendanceRegister()"></select>
+                        </div>
+
+                        <!-- Date Filters -->
+                        <div class="w-full md:w-48">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Filter By</label>
+                            <select id="registerFilterType" class="w-full p-2.5 border rounded-lg"
+                                onchange="toggleDateInputs(); renderAttendanceRegister()">
+                                <option value="month">This Month</option>
+                                <option value="week">This Week</option>
+                                <option value="custom">Custom Date</option>
+                            </select>
+                        </div>
+
+                        <!-- Session Tabs -->
+                        <div class="w-full md:w-auto flex-grow flex flex-col justify-end">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase mb-1">Session Register</label>
+                            <div class="flex bg-gray-100 rounded-lg p-1 gap-1">
+                                <button onclick="switchRegisterTab('Theory')" id="tabTheory"
+                                    class="flex-1 py-2 px-4 rounded-md text-xs font-bold transition-all bg-white text-blue-700 shadow-sm border border-blue-200">
+                                    THEORY
+                                </button>
+                                <button onclick="switchRegisterTab('Workshop')" id="tabWorkshop"
+                                    class="flex-1 py-2 px-4 rounded-md text-xs font-bold transition-all text-gray-500 hover:bg-gray-200">
+                                    WORKSHOP
+                                </button>
+                                <button onclick="switchRegisterTab('All')" id="tabAll"
+                                    class="flex-1 py-2 px-4 rounded-md text-xs font-bold transition-all text-gray-500 hover:bg-gray-200">
+                                    ALL
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="customDateInputs" class="hidden flex gap-2 w-full md:w-auto">
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">From</label>
+                                <input type="date" id="registerStartDate" class="w-full p-2.5 border rounded-lg"
+                                    onchange="renderAttendanceRegister()">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">To</label>
+                                <input type="date" id="registerEndDate" class="w-full p-2.5 border rounded-lg"
+                                    onchange="renderAttendanceRegister()">
+                            </div>
+                        </div>
+
+                        <button onclick="renderAttendanceRegister()"
+                            class="bg-blue-600 text-white font-bold py-2.5 px-6 rounded-lg hover:bg-blue-700 shadow-md transition-colors h-[42px]">
+                            Apply
+                        </button>
+                    </div>
+
+                    <div id="registerTableContainer"></div>
+                </div>
+            </div>
+
+            <!-- Setup View -->
+            <div id="assessmentSetup" class="app-view hidden">
+                <h2 class="text-2xl font-bold mb-6 text-primary text-center">Assessment Entry</h2>
+
+                <!-- Tab Navigation -->
+                <div class="flex justify-center gap-2 mb-6">
+                    <button onclick="switchAssessmentTab('workshop')" id="workshopTab"
+                        class="px-6 py-3 font-bold rounded-xl transition-all bg-primary text-white">
+                        Workshop Viva Entry
+                    </button>
+                    <button onclick="switchAssessmentTab('exam')" id="examTab"
+                        class="px-6 py-3 font-bold rounded-xl transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        Assessment Exam
+                    </button>
+                </div>
+
+                <!-- Workshop Viva Tab Content -->
+                <div id="workshopTabContent" class="tab-content">
+                    <div class="bg-white p-8 border rounded-2xl shadow-sm max-w-xl mx-auto space-y-4">
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Batch</label><select
+                                id="assessBatchSelector" class="w-full p-3 border rounded-xl bg-gray-50"></select></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Semester</label><select
+                                    id="assessSemesterSelector" class="w-full p-3 border rounded-xl text-sm">
+                                    <option value="1st">1st Sem</option>
+                                    <option value="2nd">2nd Sem</option>
+                                    <option value="3rd">3rd Sem</option>
+                                </select></div>
+                            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Sub-Batch</label><select
+                                    id="assessSubBatchSelector" class="w-full p-3 border rounded-xl text-sm"></select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Max Mark</label><input
+                                    type="number" id="assessMaxMark" value="200"
+                                    class="w-full p-3 border rounded-xl text-sm">
+                            </div>
+                            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Exam Date</label><input
+                                    type="date" id="assessExamDate" class="w-full p-3 border rounded-xl text-sm"></div>
+                        </div>
+                        <button onclick="handleGenerateRequest('assessment')"
+                            class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg hover:scale-[1.01] transition-all">Begin
+                            Mark Entry</button>
+                    </div>
+                </div>
+
+                <!-- Assessment Exam Tab Content -->
+                <div id="examTabContent" class="tab-content hidden">
+                    <div class="bg-white p-8 border rounded-2xl shadow-sm max-w-4xl mx-auto space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Batch</label><select
+                                    id="examBatchSelector" onchange="loadAssessmentExamTable()"
+                                    class="w-full p-3 border rounded-xl bg-gray-50"></select></div>
+                            <div><label class="text-[10px] font-bold text-gray-500 uppercase">Exam Date</label><input
+                                    type="date" id="examDate" onchange="loadAssessmentExamTable()"
+                                    class="w-full p-3 border rounded-xl text-sm"></div>
+                        </div>
+                        <div id="assessmentExamTableContainer" class="mt-6">
+                            <!-- Table will be rendered here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Print Center -->
+            <div id="printSetup" class="app-view hidden">
+                <h2 class="text-2xl font-bold mb-6 text-indigo-700 text-center">Document Center</h2>
+                <div class="bg-white p-8 border rounded-2xl shadow-sm max-w-xl mx-auto space-y-4">
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Document Type</label><select
+                            id="printTypeSelector" class="w-full p-3 border rounded-xl text-sm">
+                            <option value="attendance-index">Attendance Index (Signature Sheet)</option>
+                            <option value="mark-sheet">Blank Mark Sheet</option>
+                            <option value="workshop-viva">Final Consolidated Mark Sheet</option>
+
+                        </select></div>
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Batch</label><select
+                            id="printBatchSelector" class="w-full p-3 border rounded-xl text-sm"></select></div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Semester</label><select
+                                id="printSemesterSelector" class="p-3 border rounded-xl w-full text-sm">
+                                <option value="1st">1st Sem</option>
+                                <option value="2nd">2nd Sem</option>
+                                <option value="3rd">3rd Sem</option>
+                            </select></div>
+                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Sub-Batch</label><select
+                                id="printSubBatchSelector" class="p-3 border rounded-xl w-full text-sm"></select></div>
+                    </div>
+                    <input type="number" id="printMaxMark" value="200" class="w-full p-3 border rounded-xl text-sm"
+                        placeholder="Max Mark Calculation">
+                    <button onclick="handleGenerateRequest('print')"
+                        class="w-full bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-black transition-all">Generate
+                        Printable Document</button>
+                </div>
+            </div>
+
+            <!-- Assessment History View -->
+            <div id="assessmentHistory" class="app-view hidden">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Recorded Assessments</h2>
+                <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b text-xs uppercase text-gray-500 font-bold">
+                                <tr>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Batch</th>
+                                    <th class="p-4">Semester</th>
+                                    <th class="p-4">Type</th>
+                                    <th class="p-4">Max Mark</th>
+                                    <th class="p-4 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assessmentHistoryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Developer Nodes View -->
+            <div id="developerNodes" class="app-view hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">🌐 Network Nodes</h2>
+                    <button onclick="window.fetchNetworkNodes()" class="px-4 py-2 bg-purple-100 text-purple-700 text-sm font-bold rounded-lg hover:bg-purple-200 shadow-sm flex items-center gap-2">
+                        <span>🔄</span> Refresh
+                    </button>
+                </div>
+                <div class="bg-white border rounded-2xl shadow-sm overflow-hidden p-6 mb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="text-xs text-gray-500">Live tracking of systems connected to the AMS Network.</p>
+                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full" id="onlineNodesCount">0 Online</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b text-xs uppercase text-gray-500 font-bold">
+                                <tr>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">User Name</th>
+                                    <th class="p-3">IP Address</th>
+                                    <th class="p-3">OS / Platform</th>
+                                    <th class="p-3">Last Seen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nodeListBody" class="text-sm">
+                                <tr><td colspan="5" class="p-4 text-center text-gray-400">Loading nodes...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Logs View -->
+            <div id="activityLogs" class="app-view hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Activity Logs</h2>
+                    <div class="flex gap-2">
+                        <button onclick="exportLogsToCSV()"
+                            class="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-bold rounded-lg hover:bg-green-200">
+                            Export CSV
+                        </button>
+                        <button id="btnClearLogs" onclick="window.activityLogger.clearLogs(); renderActivityLogs();"
+                            class="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded-lg hover:bg-red-200">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Log Filters -->
+                <div
+                    class="bg-white border rounded-xl p-4 mb-4 shadow-sm grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">From Date</label>
+                        <input type="date" id="logStartDate" class="w-full text-xs p-2 border rounded-lg bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">To Date</label>
+                        <input type="date" id="logEndDate" class="w-full text-xs p-2 border rounded-lg bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">User</label>
+                        <select id="logUserFilter"
+                            class="w-full text-xs p-2 border rounded-lg bg-gray-50 outline-none focus:border-blue-500">
+                            <option value="">All Users</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Action Type</label>
+                        <select id="logActionFilter"
+                            class="w-full text-xs p-2 border rounded-lg bg-gray-50 outline-none focus:border-blue-500">
+                            <option value="">All Actions</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="logSearch" placeholder="Search keywords..."
+                            class="w-full text-xs p-2 border rounded-lg bg-gray-50 outline-none focus:border-blue-500">
+                        <button onclick="renderActivityLogs()"
+                            class="bg-blue-600 text-white font-bold px-3 py-2 rounded-lg hover:bg-blue-700 shadow-sm">
+                            Apply
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white border rounded-2xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto max-h-[600px]">
+                        <table class="w-full text-left">
+                            <thead
+                                class="bg-gray-50 border-b text-[10px] uppercase text-gray-500 font-bold sticky top-0">
+                                <tr>
+                                    <th class="p-3 w-32">Time</th>
+                                    <th class="p-3 w-24">User</th>
+                                    <th class="p-3 w-24">Action</th>
+                                    <th class="p-3">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityLogBody" class="text-xs">
+                                <tr>
+                                    <td colspan="4" class="p-4 text-center text-gray-400">Loading logs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p class="text-[10px] text-gray-400 mt-2 text-center">Logs are stored locally on this device. Max 1000
+                    entries.</p>
+            </div>
+
+            <!-- Sheet Generator View -->
+            <div id="sheetGeneration" class="app-view hidden">
+                <div
+                    class="no-print flex justify-between items-center bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-6">
+                    <button onclick="renderView('dashboard')" class="text-gray-600 font-bold hover:underline">← Cancel &
+                        Back</button>
+                    <div id="markSheetControls" class="flex gap-2"><button onclick="saveMarks()"
+                            class="px-6 py-2 bg-green-600 text-white font-bold rounded-lg shadow hover:bg-green-700 transition-all">💾
+                            Save Scores</button></div>
+                    <button onclick="window.print()"
+                        class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700 transition-all">🖨️
+                        Print to A4</button>
+                </div>
+
+                <div id="printable-content" class="bg-white p-6 md:p-10 print:p-0 border shadow-sm mx-auto auto-scale">
+                    <header class="text-center">
+                        <img src="assets/img/header-logo.png" class="mx-auto h-20 print:h-12 object-contain mb-2">
+                        <h2 class="text-lg md:text-xl print:text-sm font-bold uppercase tracking-wide">ADVANCED DIPLOMA
+                            IN AUTOMOBILE
+                            ENGINEERING</h2>
+                        <h3 id="sheetMainTitle"
+                            class="text-md md:text-lg print:text-xs font-bold text-blue-700 uppercase">WORKSHOP
+                            VIVA</h3>
+                        <h4 id="sheetTitle"
+                            class="text-sm md:text-md font-semibold border-b-2 border-black inline-block px-8 pb-0.5 mt-1">
+                            ASSESSMENT SHEET</h4>
+                    </header>
+
+                    <div
+                        class="grid grid-cols-2 gap-y-1 text-[10px] md:text-xs font-semibold mt-4 mb-4 print:mt-1 print:mb-2 header-info-grid">
+                        <p>SESSION: <span id="sheetSemesterDisplay" class="font-normal underline"></span></p>
+                        <p class="text-right">DATE: <span id="sheetDate" class="font-normal underline"></span></p>
+                        <p>BATCH: <span id="sheetBatchDisplay" class="font-normal underline"></span></p>
+                        <p class="text-right" id="maxMarkHeaderContainer">MAX. MARK: <span id="displayMaxMark"
+                                class="font-normal underline"></span></p>
+                    </div>
+
+                    <div class="overflow-visible">
+                        <table id="generatedSheetTable" class="w-full border-collapse border-2 border-black">
+                            <thead class="bg-gray-50">
+                                <tr id="generatedSheetHeader"></tr>
+                            </thead>
+                            <tbody id="generatedSheetBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-8 print:mt-4 flex justify-between text-center px-12">
+                        <div class="flex flex-col items-center">
+                            <div class="w-32 border-b border-black mb-1"></div>
+                            <p class="text-[9px] font-bold">Class Incharge</p>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-32 border-b border-black mb-1"></div>
+                            <p class="text-[9px] font-bold">HOD / Principal</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup & Restore View -->
+            <div id="backupRestore" class="app-view hidden">
+                <h2 class="text-2xl font-bold mb-6 text-green-700">Backup & Restore</h2>
+                
+                <div class="flex gap-2 mb-6">
+                    <button onclick="window.switchBackupTab('backup')" id="tabBackup"
+                        class="px-6 py-3 font-bold rounded-xl transition-all bg-primary text-white">
+                        📥 Backup
+                    </button>
+                    <button onclick="window.switchBackupTab('restore')" id="tabRestore"
+                        class="px-6 py-3 font-bold rounded-xl transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        📤 Restore
+                    </button>
+                </div>
+
+                <div id="backupTabContent">
+                    <div class="bg-green-50 p-6 rounded-2xl border border-green-200 mb-6">
+                        <h3 class="font-bold text-lg mb-2">📥 Create Backup</h3>
+                        <p class="text-sm text-gray-600 mb-4">Download a copy of all your data including students, staff, attendance records, and assessments.</p>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-white rounded-xl border">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-blue-600" id="backupStudentCount">0</p>
+                                <p class="text-xs text-gray-500">Students</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-purple-600" id="backupStaffCount">0</p>
+                                <p class="text-xs text-gray-500">Staff</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-orange-600" id="backupBatchCount">0</p>
+                                <p class="text-xs text-gray-500">Batches</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-green-600" id="backupRecordCount">0</p>
+                                <p class="text-xs text-gray-500">Records</p>
+                            </div>
+                        </div>
+
+                        <button onclick="window.createOfflineBackup()"
+                            class="w-full py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-lg flex items-center justify-center gap-2 transition-all text-lg">
+                            <span>💾</span> Download Backup File
+                        </button>
+
+                        <!-- GitHub Sync -->
+                        <div class="mt-4 p-4 bg-gray-900 rounded-xl border border-gray-700">
+                            <h4 class="text-white font-bold text-sm mb-1 flex items-center gap-2">
+                                <span>☁️</span> Sync to GitHub
+                            </h4>
+                            <p class="text-gray-400 text-xs mb-3">Save all data permanently to GitHub so it loads automatically on any device.</p>
+                            <button id="githubSyncBtn" onclick="window.githubSyncToCloud()"
+                                class="w-full py-3 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-100 shadow transition-all flex items-center justify-center gap-2">
+                                <span>⬆️</span>
+                                <span id="githubSyncBtnText">Push Data to GitHub</span>
+                                <svg id="githubSyncBtnSpinner" class="hidden animate-spin h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="window.githubClearToken()"
+                                class="mt-2 w-full py-2 text-xs text-gray-500 hover:text-red-400 transition-colors">
+                                🔑 Clear Saved Token
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="restoreTabContent" class="hidden">
+                    <div class="bg-red-50 p-6 rounded-2xl border border-red-200">
+                        <h3 class="font-bold text-lg mb-2 text-red-700">⚠️ Restore Data</h3>
+                        <p class="text-sm text-gray-600 mb-4">Upload a backup file to restore your data. WARNING: This will replace all current data!</p>
+                        
+                        <div class="mb-4 p-4 border-2 border-dashed border-gray-300 rounded-xl bg-white">
+                            <input type="file" id="restoreFileInput" accept=".json"
+                                onchange="window.handleRestoreFileSelect(event)"
+                                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200">
+                            <p class="text-xs text-gray-400 mt-2">Supported: JSON files (Max: 50MB)</p>
+                        </div>
+
+                        <div id="restoreFileInfo" class="hidden mb-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                            <p class="font-bold text-sm" id="restoreFileName"></p>
+                            <p class="text-xs text-gray-500" id="restoreFileDate"></p>
+                        </div>
+
+                        <button onclick="window.triggerOfflineRestore()" id="btnConfirmRestore" disabled
+                            class="w-full py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg flex items-center justify-center gap-2 transition-all text-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span>🔄</span> Confirm Restore
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Allocation View -->
+            <div id="batchAllocation" class="app-view hidden">
+                <h2 class="text-2xl font-bold mb-6 text-purple-700">🏷️ Batch Allocation (Document Access)</h2>
+                
+                <div class="bg-white p-6 rounded-2xl border border-purple-200 shadow-sm mb-6">
+                    <p class="text-sm text-gray-600 mb-6">Assign batches to staff members. Staff will only be able to view documents for students in their allocated batches.</p>
+                    <div id="batchAllocationContainer" class="space-y-4">
+                        <p class="text-sm text-center text-gray-400">Loading staff list...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Bulk Input Modal -->
+    <div id="bulkInputModal" class="no-print fixed inset-0 bg-black/60 z-[200] flex justify-center items-center hidden"
+        onclick="toggleBulkInputModal(false)">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-11/12 max-w-lg border" onclick="event.stopPropagation()">
+            <h3 class="text-xl font-bold mb-4 border-b pb-2">Bulk Import Students</h3>
+            <form onsubmit="handleBulkInput(event)" class="space-y-4">
+                <div><label class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1">Batch
+                        ID</label><input type="text" id="bulkBatchId" required
+                        class="w-full p-2.5 border rounded-lg uppercase bg-gray-50 focus:ring-2 focus:ring-primary outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1">Data (Name,
+                        Admission No)</label>
+                    <textarea id="bulkStudentData" rows="8" required
+                        class="w-full p-3 border rounded-lg font-mono text-xs focus:ring-2 focus:ring-primary outline-none"
+                        placeholder="Format: John Doe, AM/101/25"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="toggleBulkInputModal(false)"
+                        class="px-6 py-2 bg-gray-100 rounded-lg text-sm font-bold text-gray-600">Cancel</button>
+                    <button type="submit"
+                        class="px-6 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow transition-all">Import
+                        Batch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Student Document Modal -->
+    <div id="studentDocumentModal"
+        class="no-print fixed inset-0 bg-gray-900/70 backdrop-blur-sm z-[200] flex justify-center items-center hidden"
+        onclick="closeStudentDocuments()">
+        <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-2xl border border-gray-200 max-h-[85vh] overflow-hidden"
+            onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
+                <div class="flex justify-between items-start">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
+                            <span class="text-2xl">📄</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Student Documents</h3>
+                            <p id="docStudentInfo" class="text-sm text-blue-100"></p>
+                        </div>
+                    </div>
+                    <button onclick="closeStudentDocuments()"
+                        class="w-8 h-8 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors flex items-center justify-center text-xl">&times;</button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6">
+                <!-- Upload Section -->
+                <div class="mb-6 p-6 border-2 border-dashed border-gray-300 rounded-xl bg-gradient-to-br from-gray-50 to-blue-50/30">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">📤</span>
+                        <label class="block text-sm font-bold text-gray-700">Upload Document</label>
+                    </div>
+                    <input type="file" id="documentFileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        onchange="handleDocumentUpload(event)"
+                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all cursor-pointer">
+                    <p class="text-xs text-gray-400 mt-3 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Supported: PDF, JPG, PNG, DOC, DOCX (Max: 500KB)
+                    </p>
+                </div>
+
+                <!-- Document List -->
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center text-xs">📁</span>
+                            Uploaded Documents
+                        </h4>
+                        <span id="docCount" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-semibold">0 files</span>
+                    </div>
+                    <div id="documentList" class="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                        <!-- Documents will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Preview Modal -->
+
+    <div id="sharePreviewModal"
+        class="no-print fixed inset-0 bg-black/60 z-[200] flex justify-center items-center hidden"
+        onclick="closeSharePreview()">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-11/12 max-w-lg border relative"
+            onclick="event.stopPropagation()">
+            <h3 class="text-xl font-bold mb-4 border-b pb-2 flex justify-between items-center">
+                <span>📝 Preview Summary</span>
+                <button onclick="closeSharePreview()" class="text-gray-400 hover:text-red-500 text-2xl">×</button>
+            </h3>
+
+            <div class="mb-4">
+                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1">Message
+                    Preview</label>
+                <textarea id="sharePreviewText" rows="12" readonly
+                    class="w-full p-3 border rounded-lg font-mono text-sm bg-gray-50 focus:ring-2 focus:ring-primary outline-none"></textarea>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <button onclick="copyShareText()"
+                    class="w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2">
+                    <span>📋 Copy Text</span>
+                </button>
+                <button onclick="proceedToWhatsApp()"
+                    class="w-full py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                    <span>📱 Open WhatsApp</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="statusFooter"
+        class="no-print fixed bottom-0 left-0 right-0 bg-gray-800 text-white text-center py-1.5 text-[10px] uppercase tracking-widest font-bold border-t border-gray-700">
+        Local Database Secured • v5.3.0-NO-ZEROS</div>
+
+
+    <!-- Main JavaScript Module -->
+    <!-- Activity Logger -->
+    <script src="js/logger.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ams-core.js?v=dev-login-v2"></script>
+</body>
+
+</html>  

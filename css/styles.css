@@ -1,0 +1,260 @@
+/* Critical Visibility Fix */
+.hidden {
+    display: none !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Print Styles */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 0; /* Use browser-defined margin, or set to 0 for full control */
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background: white;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    #app {
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #printable-content {
+        padding: 10mm !important;
+        margin: 0 !important;
+        width: 100%;
+        max-height: 297mm; /* Full A4 height */
+        box-sizing: border-box;
+        overflow: hidden; /* Prevent multiple pages */
+        display: block !important;
+    }
+
+    /* Force single page fit for tables */
+    table {
+        page-break-inside: avoid;
+        width: 100% !important;
+        table-layout: auto;
+    }
+
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    /* Auto-scaling helper - JS will adjust this variable */
+    .auto-scale {
+        transform-origin: top center;
+        width: 100% !important;
+    }
+}
+
+/* Excel-like Table Styling */
+.excel-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.excel-table th,
+.excel-table td {
+    border: 1px solid black !important;
+    padding: 6px !important;
+}
+
+.excel-table th {
+    background-color: #f3f4f6;
+    /* Light gray header */
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    /* text-xs */
+    text-align: center;
+}
+
+.excel-table td {
+    font-size: 0.875rem;
+    /* text-sm */
+    vertical-align: middle;
+}
+
+@media print {
+    .excel-table th {
+        background-color: #e5e7eb !important;
+        /* Slightly darker for print contrast */
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* Server Connection Indicator (Premium Design) */
+#serverIndicator {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    transform: translateY(0);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+}
+
+#serverIndicator:hover {
+    transform: translateY(-4px) scale(1.02);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Connection States */
+#serverIndicator.connected { border-color: rgba(34, 197, 94, 0.3); }
+#serverIndicator.connected #serverDot {
+    background-color: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    animation: pulse-green 2s infinite;
+}
+
+#serverIndicator.disconnected { border-color: rgba(239, 68, 68, 0.3); }
+#serverIndicator.disconnected #serverDot {
+    background-color: #ef4444;
+    animation: pulse-red 1s infinite;
+}
+
+#serverIndicator.syncing { border-color: rgba(59, 130, 246, 0.3); }
+#serverIndicator.syncing #serverDot {
+    background-color: #3b82f6;
+    animation: spin-pulse 0.8s ease-in-out infinite;
+}
+
+/* Animations Core */
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+@keyframes pulse-red {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.6; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Global App Animations */
+.app-view {
+    animation: fadeInSlide 0.5s ease-out backwards;
+}
+
+@keyframes fadeInSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Premium Button Interactions */
+button:not(:disabled) {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:not(:disabled):hover {
+    filter: brightness(1.05);
+}
+
+button:not(:disabled):active {
+    transform: scale(0.96);
+    filter: brightness(0.95);
+}
+
+/* Success/Error Notifications */
+#appMessage {
+    animation: slideInNotification 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+@keyframes slideInNotification {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Shimmer Effect for Syncing Buttons */
+.sync-shimmer {
+    position: relative;
+    overflow: hidden !important;
+}
+
+.sync-shimmer::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.1) 30%,
+        rgba(255,255,255,0.2) 50%,
+        rgba(255,255,255,0.1) 70%,
+        rgba(255,255,255,0) 100%
+    );
+    animation: shimmer-swipe 2s infinite linear;
+}
+
+@keyframes shimmer-swipe {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(0deg); }
+}
+
+/* Skeleton/Loading card shimmer */
+.loading-shimmer {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: skeleton-flow 1.5s infinite;
+}
+
+@keyframes skeleton-flow {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Dashboard & Management Cards Hover Effect */
+#dashboardCards > div, 
+.app-view .grid > div[onclick] {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+}
+
+#dashboardCards > div:hover,
+.app-view .grid > div[onclick]:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1), 0 8px 8px -5px rgba(0, 0, 0, 0.04);
+    border-color: rgba(37, 99, 235, 0.2);
+}
